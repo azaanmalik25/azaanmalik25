@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://calculatorhub.com/sitemap.xml
+
+Disallow: /api/
