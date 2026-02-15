@@ -191,8 +191,35 @@ const TAX_BRACKETS = {
   },
 }
 
-// Update Pakistan tax brackets with latest FBR rates (2023-2024)
+// Update Pakistan tax brackets with latest FBR rates (2023-2026)
 const PAKISTAN_TAX_BRACKETS = {
+  2026: [
+    { rate: 0.0, min: 0, max: 700000 },
+    { rate: 0.05, min: 700001, max: 1400000, base: 0, excess: 700000 },
+    { rate: 0.1, min: 1400001, max: 2800000, base: 35000, excess: 1400000 },
+    { rate: 0.15, min: 2800001, max: 4200000, base: 175000, excess: 2800000 },
+    { rate: 0.2, min: 4200001, max: 7000000, base: 385000, excess: 4200000 },
+    { rate: 0.25, min: 7000001, max: 14000000, base: 945000, excess: 7000000 },
+    { rate: 0.32, min: 14000001, max: Number.POSITIVE_INFINITY, base: 2695000, excess: 14000000 },
+  ],
+  2025: [
+    { rate: 0.0, min: 0, max: 650000 },
+    { rate: 0.05, min: 650001, max: 1300000, base: 0, excess: 650000 },
+    { rate: 0.1, min: 1300001, max: 2600000, base: 32500, excess: 1300000 },
+    { rate: 0.15, min: 2600001, max: 3900000, base: 162500, excess: 2600000 },
+    { rate: 0.2, min: 3900001, max: 6500000, base: 357500, excess: 3900000 },
+    { rate: 0.25, min: 6500001, max: 13000000, base: 877500, excess: 6500000 },
+    { rate: 0.32, min: 13000001, max: Number.POSITIVE_INFINITY, base: 2502500, excess: 13000000 },
+  ],
+  2024: [
+    { rate: 0.0, min: 0, max: 600000 },
+    { rate: 0.05, min: 600001, max: 1200000, base: 0, excess: 600000 },
+    { rate: 0.1, min: 1200001, max: 2400000, base: 30000, excess: 1200000 },
+    { rate: 0.15, min: 2400001, max: 3600000, base: 150000, excess: 2400000 },
+    { rate: 0.2, min: 3600001, max: 6000000, base: 330000, excess: 3600000 },
+    { rate: 0.25, min: 6000001, max: 12000000, base: 810000, excess: 6000000 },
+    { rate: 0.32, min: 12000001, max: Number.POSITIVE_INFINITY, base: 2310000, excess: 12000000 },
+  ],
   2023: [
     { rate: 0.0, min: 0, max: 600000 },
     { rate: 0.05, min: 600001, max: 1200000, base: 0, excess: 600000 },
@@ -253,8 +280,9 @@ export default function IncomeTaxCalculator() {
   const [state, setState] = useState("federal")
 
   // Add this to the component function, after the existing state variables
-  const [country, setCountry] = useState<"us" | "pakistan">("us")
-  const [salaryFrequency, setSalaryFrequency] = useState<"monthly" | "annual">("annual")
+  const [country, setCountry] = useState<"us" | "pakistan">("pakistan")
+  const [salaryFrequency, setSalaryFrequency] = useState<"monthly" | "annual">("monthly")
+  const [pakistanTaxYear, setPakistanTaxYear] = useState<"2026" | "2025" | "2024" | "2023">("2026")
 
   const [taxableIncome, setTaxableIncome] = useState<number | null>(null)
   const [federalTax, setFederalTax] = useState<number | null>(null)
@@ -321,7 +349,7 @@ export default function IncomeTaxCalculator() {
   const calculatePakistanIncomeTax = (income: number): number => {
     // If monthly salary, convert to annual for calculation
     const annualIncome = salaryFrequency === "monthly" ? income * 12 : income
-    const brackets = PAKISTAN_TAX_BRACKETS[2023] // Using 2023 brackets
+    const brackets = PAKISTAN_TAX_BRACKETS[pakistanTaxYear as keyof typeof PAKISTAN_TAX_BRACKETS] || PAKISTAN_TAX_BRACKETS["2026"]
     let tax = 0
 
     for (const bracket of brackets) {
@@ -366,20 +394,23 @@ export default function IncomeTaxCalculator() {
       setTakeHomeIncome(incomeForDisplay - incomeTax)
 
       // Set bracket breakdown for Pakistan
-      const brackets = PAKISTAN_TAX_BRACKETS[2023]
+      const brackets = PAKISTAN_TAX_BRACKETS[pakistanTaxYear as keyof typeof PAKISTAN_TAX_BRACKETS] || PAKISTAN_TAX_BRACKETS["2026"]
       const breakdown: Array<{ rate: number; amount: number }> = []
+      
+      // Get the annual income for bracket calculation
+      const annualIncomeForBrackets = salaryFrequency === "monthly" ? Number(income) * 12 : Number(income)
 
       for (const bracket of brackets) {
-        if (Number(income) > bracket.min) {
+        if (annualIncomeForBrackets > bracket.min) {
           let taxForBracket = 0
 
           if (bracket.rate === 0) {
             // No tax for 0% bracket
             taxForBracket = 0
           } else if ("base" in bracket && "excess" in bracket) {
-            if (Number(income) <= bracket.max) {
+            if (annualIncomeForBrackets <= bracket.max) {
               // Income falls within this bracket
-              taxForBracket = bracket.rate * (Number(income) - bracket.excess)
+              taxForBracket = bracket.rate * (annualIncomeForBrackets - bracket.excess)
             } else {
               // Income exceeds this bracket
               taxForBracket = bracket.rate * (bracket.max - bracket.excess)
@@ -399,7 +430,7 @@ export default function IncomeTaxCalculator() {
 
       // Find marginal rate (highest bracket rate that applies)
       for (let i = brackets.length - 1; i >= 0; i--) {
-        if (Number(income) > brackets[i].min) {
+        if (annualIncomeForBrackets > brackets[i].min) {
           setMarginalRate(brackets[i].rate * 100)
           break
         }
@@ -473,6 +504,7 @@ export default function IncomeTaxCalculator() {
     customYear,
     country,
     salaryFrequency,
+    pakistanTaxYear,
   ])
 
   const formatCurrency = (amount: number) => {
@@ -565,11 +597,11 @@ export default function IncomeTaxCalculator() {
       <RedBlackBanner
         messages={[
           { text: "⚠️ IMPORTANT TAX NOTICE ⚠️", highlight: true },
-          { text: "Latest FBR Tax Rates for 2023-2024 Included" },
+          { text: "2026 FBR Tax Rates Now Available!" },
           { text: "🇵🇰", highlight: true },
           { text: "Calculate Monthly or Annual Tax Obligations" },
           { text: "⚠️", highlight: true },
-          { text: "Pakistan Tax Calculator Updated with Latest Rates" },
+          { text: "Pakistan Salary Tax Calculator 2026 with Latest FBR Brackets" },
           { text: "💰", highlight: true },
           { text: "Plan Your Finances with Accurate Tax Calculations" },
         ]}
@@ -612,27 +644,47 @@ export default function IncomeTaxCalculator() {
       </div>
 
       {country === "pakistan" && (
-        <div className="space-y-2">
-          <Label>Salary Frequency</Label>
-          <RadioGroup
-            value={salaryFrequency}
-            onValueChange={(value) => setSalaryFrequency(value as "monthly" | "annual")}
-            className="grid grid-cols-2 gap-2"
-          >
-            <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted">
-              <RadioGroupItem value="monthly" id="monthly" />
-              <Label htmlFor="monthly" className="cursor-pointer">
-                Monthly Salary
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted">
-              <RadioGroupItem value="annual" id="annual" />
-              <Label htmlFor="annual" className="cursor-pointer">
-                Annual Salary
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
+        <>
+          <div className="space-y-2">
+            <Label>Salary Frequency</Label>
+            <RadioGroup
+              value={salaryFrequency}
+              onValueChange={(value) => setSalaryFrequency(value as "monthly" | "annual")}
+              className="grid grid-cols-2 gap-2"
+            >
+              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted">
+                <RadioGroupItem value="monthly" id="monthly" />
+                <Label htmlFor="monthly" className="cursor-pointer">
+                  Monthly Salary
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted">
+                <RadioGroupItem value="annual" id="annual" />
+                <Label htmlFor="annual" className="cursor-pointer">
+                  Annual Salary
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pakistan-tax-year">Tax Year (FBR)</Label>
+            <Select
+              value={pakistanTaxYear}
+              onValueChange={(value) => setPakistanTaxYear(value as "2026" | "2025" | "2024" | "2023")}
+            >
+              <SelectTrigger id="pakistan-tax-year">
+                <SelectValue placeholder="Select tax year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2026">2026 (Latest FBR)</SelectItem>
+                <SelectItem value="2025">2025 (FBR)</SelectItem>
+                <SelectItem value="2024">2024 (FBR)</SelectItem>
+                <SelectItem value="2023">2023 (FBR)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </>
       )}
 
       <div className="space-y-4">
