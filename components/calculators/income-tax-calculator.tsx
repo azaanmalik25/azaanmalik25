@@ -269,26 +269,17 @@ type FilingStatus = "single" | "married" | "head"
 type TaxYear = string
 
 export default function IncomeTaxCalculator() {
-  const [income, setIncome] = useState<number | "">("")
-  const [filingStatus, setFilingStatus] = useState<FilingStatus>("single")
-  const [deductions, setDeductions] = useState<number | "">("")
-  const [useStandardDeduction, setUseStandardDeduction] = useState(true)
-  const [taxCredits, setTaxCredits] = useState<number | "">("")
-  const [currency, setCurrency] = useState("USD")
-  const [taxYear, setTaxYear] = useState<TaxYear>("2023")
-  const [customYear, setCustomYear] = useState<number>(2030)
-  const [state, setState] = useState("federal")
-
-  // Add this to the component function, after the existing state variables
-  const [country, setCountry] = useState<"us" | "pakistan">("pakistan")
+  const [income, setIncome] = useState<number>(0)
   const [salaryFrequency, setSalaryFrequency] = useState<"monthly" | "annual">("monthly")
   const [pakistanTaxYear, setPakistanTaxYear] = useState<"2026" | "2025" | "2024" | "2023">("2026")
+  const [basicAltPayment, setBasicAltPayment] = useState<number>(0)
+  const [allowances, setAllowances] = useState<number>(0)
 
-  const [taxableIncome, setTaxableIncome] = useState<number | null>(null)
-  const [federalTax, setFederalTax] = useState<number | null>(null)
-  const [effectiveRate, setEffectiveRate] = useState<number | null>(null)
-  const [marginalRate, setMarginalRate] = useState<number | null>(null)
-  const [takeHomeIncome, setTakeHomeIncome] = useState<number | null>(null)
+  const [taxableIncome, setTaxableIncome] = useState<number>(0)
+  const [incomeTax, setIncomeTax] = useState<number>(0)
+  const [effectiveRate, setEffectiveRate] = useState<number>(0)
+  const [marginalRate, setMarginalRate] = useState<number>(0)
+  const [netIncome, setNetIncome] = useState<number>(0)
   const [bracketBreakdown, setBracketBreakdown] = useState<Array<{ rate: number; amount: number }>>([])
 
   // Update the getTaxBracketsForYear function to handle Pakistan
@@ -378,103 +369,64 @@ export default function IncomeTaxCalculator() {
 
   // Calculate taxes when inputs change
   useEffect(() => {
-    if (income === "") return
+    if (income === 0) return
 
-    if (country === "pakistan") {
-      // Pakistan tax calculation
-      const incomeTax = calculatePakistanIncomeTax(Number(income))
-      setFederalTax(incomeTax)
+    // Pakistan tax calculation
+    const annualIncome = salaryFrequency === "monthly" ? income * 12 : income
+    const totalAnnualAllowances = (salaryFrequency === "monthly" ? allowances * 12 : allowances) || 0
+    const taxableAnnualIncome = annualIncome + totalAnnualAllowances
 
-      // For display purposes, use the appropriate income amount
-      const incomeForCalculation = salaryFrequency === "monthly" ? Number(income) * 12 : Number(income)
-      const incomeForDisplay = Number(income)
+    const calculatedTax = calculatePakistanIncomeTax(income)
+    setIncomeTax(calculatedTax)
 
-      setTaxableIncome(incomeForDisplay) // In Pakistan's case, we're not handling deductions in this simplified model
-      setEffectiveRate((incomeTax / incomeForDisplay) * 100)
-      setTakeHomeIncome(incomeForDisplay - incomeTax)
+    setTaxableIncome(salaryFrequency === "monthly" ? income : income)
+    setEffectiveRate(income > 0 ? (calculatedTax / income) * 100 : 0)
+    setNetIncome(income - calculatedTax)
 
-      // Set bracket breakdown for Pakistan
-      const brackets = PAKISTAN_TAX_BRACKETS[pakistanTaxYear as keyof typeof PAKISTAN_TAX_BRACKETS] || PAKISTAN_TAX_BRACKETS["2026"]
-      const breakdown: Array<{ rate: number; amount: number }> = []
-      
-      // Get the annual income for bracket calculation
-      const annualIncomeForBrackets = salaryFrequency === "monthly" ? Number(income) * 12 : Number(income)
-
-      for (const bracket of brackets) {
-        if (annualIncomeForBrackets > bracket.min) {
-          let taxForBracket = 0
-
-          if (bracket.rate === 0) {
-            // No tax for 0% bracket
-            taxForBracket = 0
-          } else if ("base" in bracket && "excess" in bracket) {
-            if (annualIncomeForBrackets <= bracket.max) {
-              // Income falls within this bracket
-              taxForBracket = bracket.rate * (annualIncomeForBrackets - bracket.excess)
-            } else {
-              // Income exceeds this bracket
-              taxForBracket = bracket.rate * (bracket.max - bracket.excess)
-            }
-          }
-
-          if (taxForBracket > 0) {
-            breakdown.push({
-              rate: bracket.rate * 100,
-              amount: taxForBracket,
-            })
-          }
-        }
-      }
-
-      setBracketBreakdown(breakdown)
-
-      // Find marginal rate (highest bracket rate that applies)
-      for (let i = brackets.length - 1; i >= 0; i--) {
-        if (annualIncomeForBrackets > brackets[i].min) {
-          setMarginalRate(brackets[i].rate * 100)
-          break
-        }
-      }
-
-      return
-    }
-
-    // Original US tax calculation logic
-    const yearToUse = taxYear === "custom" ? customYear.toString() : taxYear
-
-    // Calculate taxable income
-    const standardDeduction = getStandardDeductionForYear(yearToUse, filingStatus)
-    const deductionAmount = useStandardDeduction ? standardDeduction : deductions || 0
-    const calculatedTaxableIncome = Math.max(0, Number(income) - deductionAmount)
-    setTaxableIncome(calculatedTaxableIncome)
-
-    // Calculate federal tax
-    const brackets = getTaxBracketsForYear(yearToUse)?.[filingStatus]
-    if (!brackets) return
-
-    let totalTax = 0
+    // Set bracket breakdown for Pakistan
+    const brackets = PAKISTAN_TAX_BRACKETS[pakistanTaxYear as keyof typeof PAKISTAN_TAX_BRACKETS] || PAKISTAN_TAX_BRACKETS["2026"]
     const breakdown: Array<{ rate: number; amount: number }> = []
+    
+    // Get the annual income for bracket calculation
+    const annualIncomeForBrackets = salaryFrequency === "monthly" ? income * 12 : income
 
-    for (let i = 0; i < brackets.length; i++) {
-      const bracket = brackets[i]
-      if (calculatedTaxableIncome > bracket.min) {
-        const taxableAmountInBracket = Math.min(calculatedTaxableIncome, bracket.max) - bracket.min
-        const taxForBracket = taxableAmountInBracket * bracket.rate
-        totalTax += taxForBracket
+    for (const bracket of brackets) {
+      if (annualIncomeForBrackets > bracket.min) {
+        let taxForBracket = 0
+
+        if (bracket.rate === 0) {
+          // No tax for 0% bracket
+          taxForBracket = 0
+        } else if ("base" in bracket && "excess" in bracket) {
+          if (annualIncomeForBrackets <= bracket.max) {
+            // Income falls within this bracket
+            taxForBracket = bracket.rate * (annualIncomeForBrackets - bracket.excess)
+          } else {
+            // Income exceeds this bracket
+            taxForBracket = bracket.rate * (bracket.max - bracket.excess)
+          }
+        }
 
         if (taxForBracket > 0) {
           breakdown.push({
             rate: bracket.rate * 100,
-            amount: taxForBracket,
+            amount: salaryFrequency === "monthly" ? taxForBracket / 12 : taxForBracket,
           })
         }
       }
     }
 
-    // Apply tax credits
-    const taxAfterCredits = Math.max(0, totalTax - (Number(taxCredits) || 0))
-    setFederalTax(taxAfterCredits)
     setBracketBreakdown(breakdown)
+
+    // Find marginal rate (highest bracket rate that applies)
+    for (let i = brackets.length - 1; i >= 0; i--) {
+      if (annualIncomeForBrackets > brackets[i].min) {
+        setMarginalRate(brackets[i].rate * 100)
+        break
+      }
+    }
+
+
 
     // Calculate rates
     if (calculatedTaxableIncome > 0) {
