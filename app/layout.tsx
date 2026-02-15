@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Calculator Hub - 50+ Online Calculators",
   description: "Free online calculators for finance, math, health, date & time, and everyday calculations.",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({

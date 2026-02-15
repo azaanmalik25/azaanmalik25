@@ -1,9 +1,10 @@
 import type React from "react"
 import { notFound } from "next/navigation"
 import { allCalculators } from "@/lib/calculator-data"
+import { getBlogPostsByCalculatorId } from "@/lib/blog-service"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Heart, Share2 } from "lucide-react"
+import { Heart, Share2, BookOpen } from "lucide-react"
 import Link from "next/link"
 import {
   Breadcrumb,
@@ -13,7 +14,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
-// Import components with correct export types
+// Import all calculator components
 import { AgeCalculator } from "@/components/calculators/age-calculator"
 import { MortgageCalculator } from "@/components/calculators/mortgage-calculator"
 import { BmiCalculator } from "@/components/calculators/bmi-calculator"
@@ -42,7 +43,13 @@ import { InflationCalculator } from "@/components/calculators/inflation-calculat
 import { CountdownTimer } from "@/components/calculators/countdown-timer"
 import { FuelEconomyCalculator } from "@/components/calculators/fuel-economy-calculator"
 import { GPACalculator } from "@/components/calculators/gpa-calculator"
-import EcommerceExpenseCalculator from "@/components/calculators/ecommerce-expense-calculator"
+import { EcommerceExpenseCalculator } from "@/components/calculators/ecommerce-expense-calculator"
+import { RetirementCalculator } from "@/components/calculators/retirement-calculator"
+import { CreditCardPayoff } from "@/components/calculators/credit-card-payoff"
+import { BMRCalculator } from "@/components/calculators/bmr-calculator"
+import { MacroCalculator } from "@/components/calculators/macro-calculator"
+import { FractionCalculator } from "@/components/calculators/fraction-calculator"
+import { ElectricityCostCalculator } from "@/components/calculators/electricity-cost-calculator"
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const calculator = allCalculators.find((calc) => calc.id === params.id)
@@ -59,12 +66,15 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   }
 }
 
-export default function CalculatorPage({ params }: { params: { id: string } }) {
+export default async function CalculatorPage({ params }: { params: { id: string } }) {
   const calculator = allCalculators.find((calc) => calc.id === params.id)
 
   if (!calculator) {
     notFound()
   }
+
+  // Get related blog posts for this calculator
+  const relatedBlogPosts = await getBlogPostsByCalculatorId(params.id)
 
   // Map calculator ID to component
   const calculatorComponents: Record<string, React.ReactNode> = {
@@ -97,12 +107,12 @@ export default function CalculatorPage({ params }: { params: { id: string } }) {
     "fuel-economy": <FuelEconomyCalculator />,
     gpa: <GPACalculator />,
     "ecommerce-expense": <EcommerceExpenseCalculator />,
-    // Add more calculator components as needed
-  }
-
-  // Render the appropriate calculator component based on the ID
-  const renderCalculator = () => {
-    return calculatorComponents[params.id] || <div>Calculator not implemented yet</div>
+    retirement: <RetirementCalculator />,
+    "credit-card-payoff": <CreditCardPayoff />,
+    bmr: <BMRCalculator />,
+    macro: <MacroCalculator />,
+    fraction: <FractionCalculator />,
+    electricity: <ElectricityCostCalculator />,
   }
 
   return (
@@ -152,6 +162,37 @@ export default function CalculatorPage({ params }: { params: { id: string } }) {
             )}
           </CardContent>
         </Card>
+
+        {/* Related Blog Posts Section */}
+        {relatedBlogPosts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Related Articles
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {relatedBlogPosts.map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/blog/${post.slug}`}
+                    className="block p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <h3 className="font-semibold mb-2">{post.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{post.excerpt}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{post.reading_time} min read</span>
+                      <span>•</span>
+                      <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { getBlogPosts, blogCategories } from "@/lib/blog-data"
+import { getBlogPosts } from "@/lib/blog-service"
 import { BlogCard } from "@/components/blog-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -27,8 +27,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function BlogPage() {
-  const posts = getBlogPosts()
+const blogCategories = [
+  "Calculator Guides",
+  "Financial Tips",
+  "Health & Fitness",
+  "Math & Science",
+  "Business Tools",
+  "Educational",
+  "Technology",
+]
+
+export default async function BlogPage() {
+  const posts = await getBlogPosts()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
