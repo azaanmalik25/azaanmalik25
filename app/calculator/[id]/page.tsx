@@ -35,7 +35,7 @@ import { FactorialCalculator } from "@/components/calculators/factorial-calculat
 import { TriangleCalculator } from "@/components/calculators/triangle-calculator"
 import { TemperatureConverter } from "@/components/calculators/temperature-converter"
 import { WorkingDaysCalculator } from "@/components/calculators/working-days-calculator"
-import { PakistanFBRTaxCalculator } from "@/components/calculators/pakistan-fbr-tax-calculator"
+import { PakistanTaxCalculator2026 } from "@/components/calculators/pakistan-tax-calculator-2026"
 import { BodyFatCalculator } from "@/components/calculators/body-fat-calculator"
 import { PregnancyCalculator } from "@/components/calculators/pregnancy-calculator"
 import { CarLoanCalculator } from "@/components/calculators/car-loan-calculator"
@@ -98,7 +98,7 @@ export default async function CalculatorPage({ params }: { params: { id: string 
     triangle: <TriangleCalculator />,
     temperature: <TemperatureConverter />,
     "working-days": <WorkingDaysCalculator />,
-    tax: <PakistanFBRTaxCalculator />,
+    tax: <PakistanTaxCalculator2026 />,
     "body-fat": <BodyFatCalculator />,
     pregnancy: <PregnancyCalculator />,
     "car-loan": <CarLoanCalculator />,
