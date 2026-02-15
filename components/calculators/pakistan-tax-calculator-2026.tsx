@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // Pakistan FBR Tax Brackets for different tax years
+// Updated for 2025-2026 Budget as per Government of Pakistan
 const TAX_BRACKETS = {
   '2025-2026': [
     { min: 0, max: 600000, base: 0, rate: 0 },

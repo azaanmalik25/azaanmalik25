@@ -12,16 +12,26 @@ export function SlidingBanner() {
   const messages = [
     {
       id: 1,
-      text: "🚀 New Factorial Calculator just added! Try it now",
-      link: "/calculator/factorial",
+      text: "🇵🇰 2025-2026 FBR Tax Calculator Updated! Calculate your exact tax liability instantly",
+      link: "/calculator/tax",
     },
     {
       id: 2,
+      text: "📊 Pakistan Tax Year 2025-2026: Tax-Free Income up to Rs. 600,000 - Check Now",
+      link: "/calculator/tax",
+    },
+    {
+      id: 3,
+      text: "💼 Latest FBR Salary Tax Brackets for 2025-2026 - Use our calculator for accurate calculations",
+      link: "/calculator/tax",
+    },
+    {
+      id: 4,
       text: "⭐ Save your favorite calculators by creating a free account",
       link: "/signup",
     },
     {
-      id: 3,
+      id: 5,
       text: "📱 Our calculators work on all devices - desktop, tablet, and mobile",
       link: null,
     },

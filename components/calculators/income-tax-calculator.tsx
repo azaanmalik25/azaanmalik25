@@ -548,14 +548,14 @@ export default function IncomeTaxCalculator() {
     <div className="space-y-6">
       <RedBlackBanner
         messages={[
-          { text: "⚠️ IMPORTANT TAX NOTICE ⚠️", highlight: true },
-          { text: "2026 FBR Tax Rates Now Available!" },
-          { text: "🇵🇰", highlight: true },
-          { text: "Calculate Monthly or Annual Tax Obligations" },
+          { text: "🇵🇰 2025-2026 BUDGET UPDATE 🇵🇰", highlight: true },
+          { text: "Tax-Free Income: Rs. 600,000 - Calculate your exact tax liability" },
+          { text: "📊", highlight: true },
+          { text: "FBR Salary Tax Calculator 2025-2026 - Latest Government Rates" },
+          { text: "💼", highlight: true },
+          { text: "Pakistan Tax Year 2025-2026: 0% Tax up to Rs. 600,000 Monthly Income" },
           { text: "⚠️", highlight: true },
-          { text: "Pakistan Salary Tax Calculator 2026 with Latest FBR Brackets" },
-          { text: "💰", highlight: true },
-          { text: "Plan Your Finances with Accurate Tax Calculations" },
+          { text: "Plan Your Finances with Accurate FBR Tax Calculations for 2025-2026" },
         ]}
         speed={60}
       />
